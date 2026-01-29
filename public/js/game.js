@@ -8,10 +8,10 @@ const gameOverTitle = document.getElementById("gameOverTitle");
 const gameOverText = document.getElementById("gameOverText");
 const closePopup = document.getElementById("closePopup");
 const rematchBtn = document.getElementById("rematchBtn");
-
-
-
 let gameOver = false;
+
+let selectedSquare = null;
+let validMoves = [];
 
 closePopup.addEventListener("click", () => {
   gameOverPopup.classList.add("hidden");
@@ -20,7 +20,6 @@ closePopup.addEventListener("click", () => {
 rematchBtn.addEventListener("click", () => {
   socket.emit("rematch");
 });
-
 
 console.log("game.js loaded");
 
@@ -104,6 +103,13 @@ const handleMove = (source, target) => {
   socket.emit("move", move);
 };
 
+const toChessSquare = (row, col) => {
+  const isBlack = playerRole === "b";
+  const realRow = isBlack ? 7 - row : row;
+  const realCol = isBlack ? 7 - col : col;
+  return `${String.fromCharCode(97 + realCol)}${8 - realRow}`;
+};
+
 const renderBoard = () => {
   const rawBoard = chess.board();
   const board =
@@ -126,6 +132,14 @@ const renderBoard = () => {
       squareElement.dataset.row = rowIndex;
       squareElement.dataset.col = squareIndex;
 
+      // 🔥 SHOW VALID MOVE DOTS (MUST BE BEFORE `if (square)`)
+      if (selectedSquare) {
+        const sq = toChessSquare(rowIndex, squareIndex);
+        if (validMoves.includes(sq)) {
+          squareElement.classList.add("valid-move");
+        }
+      }
+
       if (square) {
         const pieceElement = document.createElement("div");
         pieceElement.classList.add(
@@ -140,13 +154,30 @@ const renderBoard = () => {
           chess.turn() === playerRole &&
           !gameOver;
 
-        pieceElement.addEventListener("dragstart", (e) => {
-          if (pieceElement.draggable) {
-            draggedPiece = pieceElement;
-            sourceSquare = { row: rowIndex, col: squareIndex };
-            e.dataTransfer.setData("text/plain", "");
-          }
+        pieceElement.addEventListener("mousedown", () => {
+          if (!pieceElement.draggable) return;
+
+          selectedSquare = { row: rowIndex, col: squareIndex };
+
+          const from = toChessSquare(rowIndex, squareIndex);
+          validMoves = chess
+            .moves({ square: from, verbose: true })
+            .map((m) => m.to);
+
+          renderBoard();
         });
+
+        pieceElement.addEventListener("dragstart", (e) => {
+          if (!pieceElement.draggable) return;
+
+          draggedPiece = pieceElement;
+          sourceSquare = { row: rowIndex, col: squareIndex };
+
+          // renderBoard();
+
+          e.dataTransfer.setData("text/plain", "");
+        });
+
         pieceElement.addEventListener("dragend", (e) => {
           draggedPiece = null;
           sourceSquare = null;
@@ -158,22 +189,38 @@ const renderBoard = () => {
       });
       squareElement.addEventListener("drop", (e) => {
         e.preventDefault();
-        if (draggedPiece) {
-          const tragetSource = {
-            row: parseInt(squareElement.dataset.row),
-            col: parseInt(squareElement.dataset.col),
-          };
+        if (!draggedPiece) return;
 
-          handleMove(sourceSquare, tragetSource);
+        const targetSource = {
+          row: parseInt(squareElement.dataset.row),
+          col: parseInt(squareElement.dataset.col),
+        };
+
+        const targetSq = toChessSquare(targetSource.row, targetSource.col);
+
+        if (!validMoves.includes(targetSq)) {
+          draggedPiece = null;
+          sourceSquare = null;
+          selectedSquare = null;
+          validMoves = [];
+          renderBoard();
+          return;
         }
+
+        handleMove(sourceSquare, targetSource);
+
+        draggedPiece = null;
+        sourceSquare = null;
+        selectedSquare = null;
+        validMoves = [];
       });
+
       boardElement.appendChild(squareElement);
     });
   });
 
   updateTurnInfo();
   checkGameStatus();
-
 };
 
 socket.on("rematchStarted", () => {
@@ -182,7 +229,6 @@ socket.on("rematchStarted", () => {
   chess.reset();
   renderBoard();
 });
-
 
 const getPieceUnicode = (piece) => {
   const unicodePieces = {

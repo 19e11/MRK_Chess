@@ -60,6 +60,20 @@
         color: #111827;
         background: linear-gradient(to right, #f3f4f6, #9ca3af);
       }
+
+      .valid-move {
+        position: relative;
+      }
+
+      .valid-move::after {
+        content: "";
+        width: 14px;
+        height: 14px;
+        background: rgba(34, 197, 94, 0.85);
+        border-radius: 50%;
+        position: absolute;
+        pointer-events: none; /* 🔥 THIS */
+      }
     </style>
   </head>
   <body>
@@ -67,37 +81,38 @@
       <div class="flex flex-col items-center gap-3">
         <div
           id="turnInfo"
-          class="w-96 text-center py-2 rounded bg-zinc-800 text-sm font-semibold">
+          class="w-96 text-center py-2 rounded bg-zinc-800 text-sm font-semibold"
+        >
           Waiting for players…
         </div>
 
         <div class="board w-96 h-96"></div>
       </div>
-      
-<div
-  id="gameOverPopup"
-  class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50"
->
-  <div class="bg-zinc-900 text-white px-12 py-4 rounded-lg text-center w-80">
-    <h2 id="gameOverTitle" class="text-xl font-bold mb-2"></h2>
-    <p id="gameOverText" class="mb-4 text-sm text-zinc-300"></p>
 
-    <button
-      id="closePopup"
-      class="px-3 py-2 bg-emerald-600 rounded hover:bg-emerald-700"
-    >
-      OK
-    </button>
-    <button
-      id="rematchBtn"
-      class="px-3 py-2 bg-emerald-600 rounded hover:bg-emerald-700"
-    >
-     ReMatch
-    </button>
-    
-  </div>
-</div>
+      <div
+        id="gameOverPopup"
+        class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      >
+        <div
+          class="bg-zinc-900 text-white px-12 py-4 rounded-lg text-center w-80"
+        >
+          <h2 id="gameOverTitle" class="text-xl font-bold mb-2"></h2>
+          <p id="gameOverText" class="mb-4 text-sm text-zinc-300"></p>
 
+          <button
+            id="closePopup"
+            class="px-3 py-2 bg-emerald-600 rounded hover:bg-emerald-700"
+          >
+            OK
+          </button>
+          <button
+            id="rematchBtn"
+            class="px-3 py-2 bg-emerald-600 rounded hover:bg-emerald-700"
+          >
+            ReMatch
+          </button>
+        </div>
+      </div>
     </div>
 
     <script
