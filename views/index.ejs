@@ -23,7 +23,7 @@
       .piece.black {
         color: black;
       }
-      
+
       .square {
         display: flex;
         align-items: center;
@@ -73,22 +73,28 @@
 
         <div class="board w-96 h-96"></div>
       </div>
-
-      <!-- GAME RESULT POPUP -->
+      
 <div
   id="gameOverPopup"
   class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50"
 >
-  <div class="bg-zinc-900 text-white px-6 py-4 rounded-lg text-center w-80">
+  <div class="bg-zinc-900 text-white px-12 py-4 rounded-lg text-center w-80">
     <h2 id="gameOverTitle" class="text-xl font-bold mb-2"></h2>
     <p id="gameOverText" class="mb-4 text-sm text-zinc-300"></p>
 
     <button
       id="closePopup"
-      class="px-4 py-2 bg-emerald-600 rounded hover:bg-emerald-700"
+      class="px-3 py-2 bg-emerald-600 rounded hover:bg-emerald-700"
     >
       OK
     </button>
+    <button
+      id="rematchBtn"
+      class="px-3 py-2 bg-emerald-600 rounded hover:bg-emerald-700"
+    >
+     ReMatch
+    </button>
+    
   </div>
 </div>
 

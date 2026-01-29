@@ -7,12 +7,20 @@ const gameOverPopup = document.getElementById("gameOverPopup");
 const gameOverTitle = document.getElementById("gameOverTitle");
 const gameOverText = document.getElementById("gameOverText");
 const closePopup = document.getElementById("closePopup");
+const rematchBtn = document.getElementById("rematchBtn");
+
+
 
 let gameOver = false;
 
 closePopup.addEventListener("click", () => {
   gameOverPopup.classList.add("hidden");
 });
+
+rematchBtn.addEventListener("click", () => {
+  socket.emit("rematch");
+});
+
 
 console.log("game.js loaded");
 
@@ -166,13 +174,15 @@ const renderBoard = () => {
   updateTurnInfo();
   checkGameStatus();
 
-  // if (playerRole === 'b'){
-  //   boardElement.classList.add("flipped");
-  // }
-  // else{
-  //   boardElement.classList.remove("flipped");
-  // }
 };
+
+socket.on("rematchStarted", () => {
+  gameOver = false;
+  gameOverPopup.classList.add("hidden");
+  chess.reset();
+  renderBoard();
+});
+
 
 const getPieceUnicode = (piece) => {
   const unicodePieces = {
@@ -205,11 +215,6 @@ socket.on("spectatorRole", (role) => {
 
 socket.on("boardState", (fen) => {
   chess.load(fen);
-  renderBoard();
-});
-
-socket.on("move", (move) => {
-  chess.move(move);
   renderBoard();
 });
 

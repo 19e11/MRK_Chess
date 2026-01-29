@@ -12,7 +12,6 @@ const io = socket(server);
 
 const chess = new Chess();
 let players = {};
-let currPlayer = "W";
 
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
@@ -20,6 +19,13 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => {
   res.render("index", { title: "ChessKhelo" });
 });
+
+const resetGame = () => {
+  chess.reset();
+  io.emit("boardState", chess.fen());
+  io.emit("rematchStarted");
+};
+
 
 io.on("connection", (socket) => {
   console.log(`${socket.id}:Connected`);
@@ -32,6 +38,11 @@ io.on("connection", (socket) => {
   } else {
     socket.emit("spectatorRole");
   }
+
+  socket.on("rematch", () => {
+  resetGame();
+});
+
 
   socket.emit("boardState", chess.fen());
 
@@ -50,8 +61,6 @@ io.on("connection", (socket) => {
 
       const result = chess.move(move);
       if (result) {
-        currPlayer = chess.turn();
-        io.emit("move", move);
         io.emit("boardState", chess.fen());
       } else {
         console.log("Invalid Move: ", move);
