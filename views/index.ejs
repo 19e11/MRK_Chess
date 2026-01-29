@@ -3,77 +3,108 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-     <style>
-        .board {
-            display: grid;
-            grid-template-columns: repeat(8, minmax(0, 1fr));
-            grid-template-rows: repeat(8, minmax(0, 1fr));
-            width: 400px;
-            height: 400px;
-            transform: rotate(0deg);
-        }
+    <title>MRK_Chess</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      .board {
+        display: grid;
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        grid-template-rows: repeat(8, minmax(0, 1fr));
+        width: 400px;
+        height: 400px;
+        transform: rotate(0deg);
+      }
 
-        .piece.white {
-            color: white;
-            filter: drop-shadow(0 0 2px rgba(0, 0, 0, 1));
-        }
+      .piece.white {
+        color: white;
+        filter: drop-shadow(0 0 2px rgba(0, 0, 0, 1));
+      }
 
-        .piece.black {
-            color: black;
-        }
+      .piece.black {
+        color: black;
+      }
+      
+      .square {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-        .flipped {
-            transform: rotate(180deg);
-        }
+      .square.light {
+        background-color: #f0d9b5;
+      }
 
-        .square {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+      .square.dark {
+        background-color: #b58863;
+      }
 
-        .square.light {
-            background-color: #f0d9b5;
-        }
+      .piece {
+        font-size: 36px;
+        cursor: pointer;
+      }
 
-        .square.dark {
-            background-color: #b58863;
-        }
+      .piece.draggable {
+        cursor: grab;
+      }
 
-        .piece {
-            font-size: 36px;
-            cursor: pointer;
-        }
+      .dragging {
+        opacity: 0.5;
+      }
 
-        .piece.draggable {
-            cursor: grab;
-        }
+      .turn-white {
+        color: #e5e7eb;
+        background: linear-gradient(to right, #374151, #111827);
+      }
 
-        .dragging {
-            opacity: 0.5;
-        }
-
-        /* Rotate pieces for black player */
-        .flipped .piece {
-            transform: rotate(180deg);
-        }
+      .turn-black {
+        color: #111827;
+        background: linear-gradient(to right, #f3f4f6, #9ca3af);
+      }
     </style>
   </head>
   <body>
     <div class="w-full h-screen bg-zinc-900 flex items-center justify-center">
-      <div class="board w-96 h-96 bg-red-400"></div>
+      <div class="flex flex-col items-center gap-3">
+        <div
+          id="turnInfo"
+          class="w-96 text-center py-2 rounded bg-zinc-800 text-sm font-semibold">
+          Waiting for players…
+        </div>
+
+        <div class="board w-96 h-96"></div>
+      </div>
+
+      <!-- GAME RESULT POPUP -->
+<div
+  id="gameOverPopup"
+  class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+>
+  <div class="bg-zinc-900 text-white px-6 py-4 rounded-lg text-center w-80">
+    <h2 id="gameOverTitle" class="text-xl font-bold mb-2"></h2>
+    <p id="gameOverText" class="mb-4 text-sm text-zinc-300"></p>
+
+    <button
+      id="closePopup"
+      class="px-4 py-2 bg-emerald-600 rounded hover:bg-emerald-700"
+    >
+      OK
+    </button>
+  </div>
+</div>
+
     </div>
-
-
 
     <script
       src="https://cdn.socket.io/4.8.1/socket.io.min.js"
       integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+"
       crossorigin="anonymous"
     ></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js" integrity="sha512-xRllwz2gdZciIB+AkEbeq+gVhX8VB8XsfqeFbUh+SzHlN96dEduwtTuVuc2u9EROlmW9+yhRlxjif66ORpsgVA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"
+      integrity="sha512-xRllwz2gdZciIB+AkEbeq+gVhX8VB8XsfqeFbUh+SzHlN96dEduwtTuVuc2u9EROlmW9+yhRlxjif66ORpsgVA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <script src="/js/game.js"></script>
   </body>
 </html>

@@ -33,6 +33,8 @@ io.on("connection", (socket) => {
     socket.emit("spectatorRole");
   }
 
+  socket.emit("boardState", chess.fen());
+
   socket.on("disconnect", () => {
     if (socket.id === players.white) {
       delete players.white;
@@ -56,9 +58,9 @@ io.on("connection", (socket) => {
         socket.emit("InvalidMove", move);
     }
 } catch (error) {
-    console.log(error);
-    socket("Invalid Move: ", move);
-    }
+  console.log("Invalid Move:", move);
+  socket.emit("InvalidMove", move);
+}
   });
 });
 
