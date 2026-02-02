@@ -69,7 +69,7 @@ io.on("connection", (socket) => {
         });
       }
     } catch {
-      socket.emit("InvalidMove", move);
+      socket.emit("InvalidMove");
     }
   });
 

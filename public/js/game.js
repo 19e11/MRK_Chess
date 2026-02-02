@@ -10,7 +10,7 @@ const closePopup = document.getElementById("closePopup");
 const rematchBtn = document.getElementById("rematchBtn");
 let gameStarted = false;
 let gameOver = false;
-
+let wasDragging = false;
 let selectedSquare = null;
 let validMoves = [];
 
@@ -68,30 +68,6 @@ const updateTurnInfo = () => {
   }
 };
 
-// const checkGameStatus = () => {
-//   if (chess.in_checkmate()) {
-//     gameOver = true;
-
-//     const winner = chess.turn() === "w" ? "Black" : "White";
-
-//     gameOverTitle.textContent = "♚ Checkmate!";
-//     gameOverText.textContent = `${winner} wins the game`;
-
-//     gameOverPopup.classList.remove("hidden");
-//     return;
-//   }
-
-//   if (chess.in_check()) {
-//     gameOverTitle.textContent = "⚠ Check";
-//     gameOverText.textContent = "King is in check!";
-//     gameOverPopup.classList.remove("hidden");
-
-//     setTimeout(() => {
-//       gameOverPopup.classList.add("hidden");
-//     }, 1200);
-//   }
-// };
-
 const handleMove = (source, target) => {
   if (gameOver) return;
 
@@ -140,7 +116,30 @@ const renderBoard = () => {
       squareElement.dataset.row = rowIndex;
       squareElement.dataset.col = squareIndex;
 
-      // 🔥 SHOW VALID MOVE DOTS (MUST BE BEFORE `if (square)`)
+      squareElement.addEventListener("click", () => {
+        if (wasDragging) return;
+        if (!gameStarted || gameOver) return;
+
+        // If no piece selected → do nothing
+        if (!selectedSquare) return;
+
+        const targetSq = toChessSquare(rowIndex, squareIndex);
+
+        // Invalid click → clear selection
+        if (!validMoves.includes(targetSq)) {
+          selectedSquare = null;
+          validMoves = [];
+          renderBoard();
+          return;
+        }
+
+        // Valid click move
+        handleMove(selectedSquare, { row: rowIndex, col: squareIndex });
+
+        selectedSquare = null;
+        validMoves = [];
+      });
+
       if (selectedSquare) {
         const sq = toChessSquare(rowIndex, squareIndex);
         if (validMoves.includes(sq)) {
@@ -177,6 +176,7 @@ const renderBoard = () => {
         });
 
         pieceElement.addEventListener("dragstart", (e) => {
+          wasDragging = true;
           if (!pieceElement.draggable) return;
 
           draggedPiece = pieceElement;
@@ -188,6 +188,7 @@ const renderBoard = () => {
         });
 
         pieceElement.addEventListener("dragend", (e) => {
+          setTimeout(() => (wasDragging = false), 0);
           draggedPiece = null;
           sourceSquare = null;
         });
@@ -242,7 +243,6 @@ socket.on("rematchStarted", () => {
   renderBoard();
 });
 
-
 socket.on("gameStart", () => {
   gameStarted = true;
   turnInfo.textContent = "Game started!";
@@ -261,9 +261,7 @@ socket.on("gameOver", ({ reason }) => {
     reason === "checkmate" ? "♚ Checkmate!" : "🤝 Draw";
 
   gameOverText.textContent =
-    reason === "checkmate"
-      ? "Game over"
-      : "The game ended in a draw";
+    reason === "checkmate" ? "Game over" : "The game ended in a draw";
 
   gameOverPopup.classList.remove("hidden");
 });
