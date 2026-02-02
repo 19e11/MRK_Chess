@@ -1,17 +1,16 @@
 const express = require("express");
-const socket = require("socket.io");
 const http = require("http");
+const socketIO = require("socket.io");
 const { Chess } = require("chess.js");
 const path = require("path");
-const { title } = require("process");
-const { error } = require("console");
 
 const app = express();
 const server = http.createServer(app);
-const io = socket(server);
+const io = socketIO(server);
 
 const chess = new Chess();
-let players = {};
+let players = { white: null, black: null };
+let gameStarted = false;
 
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
@@ -22,13 +21,15 @@ app.get("/", (req, res) => {
 
 const resetGame = () => {
   chess.reset();
+  gameStarted = true;
   io.emit("boardState", chess.fen());
   io.emit("rematchStarted");
 };
 
-
 io.on("connection", (socket) => {
-  console.log(`${socket.id}:Connected`);
+  console.log(`${socket.id} connected`);
+
+  // Assign roles
   if (!players.white) {
     players.white = socket.id;
     socket.emit("playerRole", "w");
@@ -39,41 +40,57 @@ io.on("connection", (socket) => {
     socket.emit("spectatorRole");
   }
 
-  socket.on("rematch", () => {
-  resetGame();
-});
-
+  // Start game only when both players are present
+  if (players.white && players.black && !gameStarted) {
+    gameStarted = true;
+    io.emit("gameStart");
+  }
 
   socket.emit("boardState", chess.fen());
 
-  socket.on("disconnect", () => {
-    if (socket.id === players.white) {
-      delete players.white;
-    } else if (socket.id === players.black) {
-      delete players.black;
-    }
-  });
-
   socket.on("move", (move) => {
+    if (!gameStarted) return;
+
     try {
       if (chess.turn() === "w" && socket.id !== players.white) return;
       if (chess.turn() === "b" && socket.id !== players.black) return;
 
       const result = chess.move(move);
-      if (result) {
-        io.emit("boardState", chess.fen());
-      } else {
-        console.log("Invalid Move: ", move);
+      if (!result) {
         socket.emit("InvalidMove", move);
+        return;
+      }
+
+      io.emit("boardState", chess.fen());
+
+      if (chess.isGameOver()) {
+        io.emit("gameOver", {
+          reason: chess.isCheckmate() ? "checkmate" : "draw",
+        });
+      }
+    } catch {
+      socket.emit("InvalidMove", move);
     }
-} catch (error) {
-  console.log("Invalid Move:", move);
-  socket.emit("InvalidMove", move);
-}
+  });
+
+  socket.on("rematch", () => {
+    if (players.white && players.black) {
+      resetGame();
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log(`${socket.id} disconnected`);
+
+    if (socket.id === players.white) players.white = null;
+    if (socket.id === players.black) players.black = null;
+
+    gameStarted = false;
+    io.emit("waitingForPlayer");
   });
 });
 
-server.listen(3000, () => {
-  console.log("Runnin!!!");
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
-  

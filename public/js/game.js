@@ -8,6 +8,7 @@ const gameOverTitle = document.getElementById("gameOverTitle");
 const gameOverText = document.getElementById("gameOverText");
 const closePopup = document.getElementById("closePopup");
 const rematchBtn = document.getElementById("rematchBtn");
+let gameStarted = false;
 let gameOver = false;
 
 let selectedSquare = null;
@@ -28,6 +29,13 @@ let sourceSquare = null;
 let playerRole = null;
 
 const updateTurnInfo = () => {
+  if (!gameStarted) {
+    turnInfo.textContent = "Waiting for opponent…";
+    turnInfo.className =
+      "w-96 text-center py-2 rounded bg-zinc-800 text-sm font-semibold";
+    return;
+  }
+
   const turn = chess.turn(); // 'w' | 'b'
 
   // Spectator before game starts
@@ -60,29 +68,29 @@ const updateTurnInfo = () => {
   }
 };
 
-const checkGameStatus = () => {
-  if (chess.in_checkmate()) {
-    gameOver = true;
+// const checkGameStatus = () => {
+//   if (chess.in_checkmate()) {
+//     gameOver = true;
 
-    const winner = chess.turn() === "w" ? "Black" : "White";
+//     const winner = chess.turn() === "w" ? "Black" : "White";
 
-    gameOverTitle.textContent = "♚ Checkmate!";
-    gameOverText.textContent = `${winner} wins the game`;
+//     gameOverTitle.textContent = "♚ Checkmate!";
+//     gameOverText.textContent = `${winner} wins the game`;
 
-    gameOverPopup.classList.remove("hidden");
-    return;
-  }
+//     gameOverPopup.classList.remove("hidden");
+//     return;
+//   }
 
-  if (chess.in_check()) {
-    gameOverTitle.textContent = "⚠ Check";
-    gameOverText.textContent = "King is in check!";
-    gameOverPopup.classList.remove("hidden");
+//   if (chess.in_check()) {
+//     gameOverTitle.textContent = "⚠ Check";
+//     gameOverText.textContent = "King is in check!";
+//     gameOverPopup.classList.remove("hidden");
 
-    setTimeout(() => {
-      gameOverPopup.classList.add("hidden");
-    }, 1200);
-  }
-};
+//     setTimeout(() => {
+//       gameOverPopup.classList.add("hidden");
+//     }, 1200);
+//   }
+// };
 
 const handleMove = (source, target) => {
   if (gameOver) return;
@@ -149,6 +157,7 @@ const renderBoard = () => {
 
         pieceElement.innerHTML = getPieceUnicode(square);
         pieceElement.draggable =
+          gameStarted &&
           playerRole !== null &&
           square.color === playerRole &&
           chess.turn() === playerRole &&
@@ -220,15 +229,45 @@ const renderBoard = () => {
   });
 
   updateTurnInfo();
-  checkGameStatus();
+  // checkGameStatus();
 };
 
 socket.on("rematchStarted", () => {
   gameOver = false;
+  gameStarted = true;
+  selectedSquare = null;
+  validMoves = [];
   gameOverPopup.classList.add("hidden");
   chess.reset();
   renderBoard();
 });
+
+
+socket.on("gameStart", () => {
+  gameStarted = true;
+  turnInfo.textContent = "Game started!";
+  renderBoard();
+});
+
+socket.on("waitingForPlayer", () => {
+  gameStarted = false;
+  turnInfo.textContent = "Waiting for opponent…";
+});
+
+socket.on("gameOver", ({ reason }) => {
+  gameOver = true;
+
+  gameOverTitle.textContent =
+    reason === "checkmate" ? "♚ Checkmate!" : "🤝 Draw";
+
+  gameOverText.textContent =
+    reason === "checkmate"
+      ? "Game over"
+      : "The game ended in a draw";
+
+  gameOverPopup.classList.remove("hidden");
+});
+
 
 const getPieceUnicode = (piece) => {
   const unicodePieces = {
